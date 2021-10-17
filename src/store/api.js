@@ -5,7 +5,7 @@ let baseURL;
 if (process.env.NODE_ENV && process.env.NODE_ENV === "development") {
   baseURL = "http://localhost:3025/";
 } else {
-  baseURL = "https://aqueous-wildwood-99814.herokuapp.com/";
+  baseURL = "https://cryptic-stream-63599.herokuapp.com/";
 }
 
 const api = axios.create({

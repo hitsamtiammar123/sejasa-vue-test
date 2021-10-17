@@ -217,14 +217,6 @@ export default {
         });
     },
   },
-  watch: {
-    getWeatherInfoStatus: (status, prevStatus) => {
-      console.log({ status, prevStatus });
-      if (status !== prevStatus) {
-        console.log("Status hehe", status);
-      }
-    },
-  },
 };
 </script>
 <style lang="scss" scoped>

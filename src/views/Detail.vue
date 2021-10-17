@@ -86,7 +86,6 @@ import { getIcon } from "../helper/index";
 export default {
   name: "Detail",
   mounted() {
-    console.log('router', this.$route);
     const query = this.$route.query;
     this.$store.dispatch("getDetailWeather", {
       lat: query.lat,
