@@ -2,7 +2,7 @@
   <v-app>
     <v-app-bar fixed :elevation="0" class="header">
       <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
-      <div class="title d-flex flex-row justify-center">Kec. Cimahi Tengah</div>
+      <div class="title d-flex flex-row justify-center">Indonesia</div>
     </v-app-bar>
     <v-navigation-drawer
       :width="sidebarHeight"
@@ -16,76 +16,90 @@
           <span class="t1">Current Location</span>
           <span class="t2 mt-4">
             <v-icon color="white">mdi-map-marker</v-icon>
-            <span class="ml-4">Kec. Cimahi Tengah</span>
+            <span class="ml-4">Indonesia</span>
           </span>
         </div>
         <div class="d-flex flex-column content-container">
-          <span class="t2 mt-4">
+          <router-link to="/location" class="t2 mt-4">
             <v-icon color="white">mdi-map-marker-plus</v-icon>
             <span class="ml-4">Add Location</span>
-          </span>
-          <router-link to="/detail" class="t2 mt-4">
-            <v-icon color="white">mdi-map-marker</v-icon>
-            <span class="ml-4">Kec. Antapani</span>
           </router-link>
-          <span class="t2 mt-4">
+          <router-link
+            v-for="(location, index) in listLocationsLimit"
+            :key="index"
+            :to="`/detail?lat=${location.lat}&lng=${location.lng}&location=${location.location}`"
+            class="t2 mt-4"
+          >
             <v-icon color="white">mdi-map-marker</v-icon>
-            <span class="ml-4">Kec. Jayahaha</span>
-          </span>
-          <span class="t2 mt-4">
-            <v-icon color="white">mdi-map-marker</v-icon>
-            <span class="ml-4">Kec. Cibaduyut</span>
+            <span class="ml-4">{{ location.location }}</span>
+          </router-link>
+          <span v-if="listLocations.length > 4" class="t2 mt-4">
+            <span>.... {{ listLocations.length - 4 }} more location</span>
           </span>
         </div>
       </div>
     </v-navigation-drawer>
     <v-main class="d-flex flex-column align-center main-content">
       <div class="main-container">
-        <div
-          v-for="i in 10"
-          :key="i"
+        <router-link
+          :to="`/detail?lat=${location.lat}&lng=${location.lng}&location=${location.location}`"
+          v-for="(location, index) in detailListLocation"
+          :key="index"
           class="d-flex flex-column justify-space-between weather-item"
         >
           <div class="d-flex flex-row">
             <div class="d-flex flex-column flex-1">
-              <h3>Chance of rain 60%</h3>
-              <h2 class="bold mt-3">Partly Cloudy</h2>
+              <h3>Chance of rain {{ location.pop }}%</h3>
+              <h2 class="bold mt-3">{{ location.weather.description }}</h2>
             </div>
-            <v-icon color="white" :size="90">mdi-weather-partly-cloudy</v-icon>
+            <v-icon color="white" :size="90">{{
+              getIcon(location.weather.id)
+            }}</v-icon>
           </div>
           <span>
             <v-icon color="white">mdi-map-marker</v-icon>
-            <span class="ml-4">Kec. Cibaduyut</span>
+            <span class="ml-4">{{ location.location }}</span>
           </span>
           <div class="d-flex flex-row justify-content-between full-width">
-            <h3>72 F</h3>
+            <h3>{{ location.temp }} F</h3>
             <span class="weather-description ml-4">
               <v-icon color="white">mdi-weather-hail</v-icon>
-              <span class="ml-2">Kec. Cibaduyut</span>
+              <span class="ml-2">{{ location.humidity }}%</span>
+            </span>
+            <span class="weather-description ml-4">
+              <v-icon color="white">mdi-weather-sunny</v-icon>
+              <span class="ml-2">{{ location.uvi }}</span>
             </span>
             <span class="weather-description ml-4">
               <v-icon color="white">mdi-weather-windy</v-icon>
-              <span class="ml-2">124 mp/h</span>
+              <span class="ml-2">{{ location.wind_speed }} mp/h</span>
             </span>
           </div>
-        </div>
+        </router-link>
       </div>
     </v-main>
-    <v-overlay :value="overlay">
-      <v-progress-circular indeterminate size="64"></v-progress-circular>
-    </v-overlay>
+    <loading-overlay :overlay="loading"></loading-overlay>
   </v-app>
 </template>
 
 <script>
+import { mapState } from "vuex";
+import { getIcon as getIconHelper } from "../helper/index";
 export default {
   name: "Home",
-
   data: () => ({
     drawer: false,
     overlay: false,
   }),
+  mounted() {
+    this.$store.dispatch("getListLocationWeatherInfo");
+  },
   computed: {
+    ...mapState({
+      listLocations: (state) => state.listLocations,
+      loading: (state) => state.getListWeatherInfoLoading,
+      detailListLocation: (state) => state.getListWeatherInfoResponse.data,
+    }),
     sidebarHeight() {
       switch (this.$vuetify.breakpoint.name) {
         case "xs":
@@ -98,6 +112,14 @@ export default {
           return "30%";
       }
       return "30%";
+    },
+    listLocationsLimit() {
+      return this.listLocations.slice(0, 4);
+    },
+  },
+  methods: {
+    getIcon(weatherId) {
+      return getIconHelper(weatherId);
     },
   },
 };

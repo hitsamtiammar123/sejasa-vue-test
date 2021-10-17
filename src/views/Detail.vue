@@ -6,7 +6,7 @@
           <v-icon color="white">mdi-chevron-left</v-icon>
         </v-app-bar-nav-icon>
         <div class="title d-flex flex-row justify-center align-center">
-          Kec. Cimahi Tengah Detail
+          {{ $route.query.location }}
         </div>
       </div>
       <div class="d-flex flex-column align-center full-width mt-7">
@@ -16,13 +16,15 @@
           color="white"
           light
           class="input-degree"
-          :label="`Degree: ${!switch1 ? 'Celcius' : 'Fahrenheit'}`"
+          :label="`Degree: ${degreeUnit}`"
         ></v-switch>
-        <v-icon color="white" :size="90">mdi-weather-partly-cloudy</v-icon>
-        <h4 class="degree-text mt-8">72°</h4>
-        <span class="lotlan-text"> 52.498611, 13.406889 </span>
-        <span class="weather-text mt-10">Partly Cloud</span>
-        <span class="date-text">Tuesday, 24 August 2021</span>
+        <v-icon color="white" :size="90">{{ weatherIcon }}</v-icon>
+        <h4 class="degree-text mt-8">{{ degree }}</h4>
+        <span class="lotlan-text"> {{ data.lat }}, {{ data.lon }} </span>
+        <span class="weather-text mt-10">{{
+          this.data.current.weather[0].description
+        }}</span>
+        <span class="date-text">{{ todayDate }}</span>
       </div>
     </v-app-bar>
     <v-main class="d-flex flex-column align-center main-content">
@@ -32,14 +34,14 @@
           <div class="box-content mr-2">
             <v-icon class="mr-3" :color="iconColor">mdi-thermometer</v-icon>
             <div class="d-flex flex-column text-container">
-              <span class="t1">72°</span>
-              <span class="t2">Fahrenheit</span>
+              <span class="t1">{{ degree }}°</span>
+              <span class="t2">{{ degreeUnit }}</span>
             </div>
           </div>
           <div class="box-content">
             <v-icon class="mr-3" :color="iconColor">mdi-weather-windy</v-icon>
             <div class="d-flex flex-column text-container">
-              <span class="t1">134 mp/h</span>
+              <span class="t1">{{ data.current.wind_speed }} mp/h</span>
               <span class="t2">Pressure</span>
             </div>
           </div>
@@ -50,14 +52,14 @@
               >mdi-white-balance-sunny</v-icon
             >
             <div class="d-flex flex-column text-container">
-              <span class="t1">0.2</span>
+              <span class="t1">{{ data.current.uvi }}</span>
               <span class="t2">UV Index</span>
             </div>
           </div>
           <div class="box-content">
             <v-icon class="mr-3" :color="iconColor">mdi-weather-hail</v-icon>
             <div class="d-flex flex-column text-container">
-              <span class="t1">48%</span>
+              <span class="t1">{{ data.current.humidity }}%</span>
               <span class="t2">Humidity</span>
             </div>
           </div>
@@ -66,16 +68,60 @@
         <div class="full-width mt-4">
           <div class="d-flex flex-row box-content align-center">
             <img src="@/assets/tips.png" class="start-img" />
-            <span class="t3 ml-3">Its ok to hangout with your friend!</span>
+            <span class="t3 ml-3">{{
+              data.current.weather && data.current.weather[0].description
+            }}</span>
           </div>
         </div>
       </div>
     </v-main>
+    <loading-overlay :overlay="loading"></loading-overlay>
   </v-app>
 </template>
 <script>
+import moment from "moment";
+import { mapState } from "vuex";
+import { getIcon } from "../helper/index";
+
 export default {
   name: "Detail",
+  mounted() {
+    console.log('router', this.$route);
+    const query = this.$route.query;
+    this.$store.dispatch("getDetailWeather", {
+      lat: query.lat,
+      lon: query.lng,
+    });
+  },
+  computed: {
+    ...mapState({
+      loading: (state) => state.getDetailWeatherLoading,
+      data: (state) => state.getDetailWeatherResponse.data,
+      status: (state) => state.getDetailWeatherStatus,
+    }),
+    degreeUnit() {
+      return this.switch1 ? "Celcius" : "Fahrenheit";
+    },
+    weatherIcon() {
+      if (this.data && Array.isArray(this.data?.current?.weather)) {
+        return getIcon(this.data.current.weather[0].id);
+      }
+      return "";
+    },
+    todayDate() {
+      return moment().format("dddd, DD MMMM YYYY");
+    },
+    degree() {
+      const currDegree = this.data?.current?.temp;
+      if (typeof currDegree !== "number") {
+        return "";
+      }
+      if (this.switch1) {
+        return (((currDegree - 32) * 5) / 9).toPrecision(3);
+      }
+      return currDegree.toPrecision(3);
+    },
+  },
   data: () => ({
     switch1: false,
     iconColor: "rgba(124, 169, 255, 1)",
@@ -185,7 +231,7 @@ $headerHeight: 441px;
           font-size: 12px;
           line-height: 16px;
           /* identical to box height, or 133% */
-          color: #A098AE;
+          color: #a098ae;
           letter-spacing: 0.3px;
         }
       }
@@ -194,7 +240,7 @@ $headerHeight: 441px;
         font-weight: normal;
         font-size: 14px;
         line-height: 25px;
-        color: #363B64;
+        color: #363b64;
       }
 
       .start-img {
